@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sky Flip</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(#87CEEB, #ffffff);
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      background: linear-gradient(#87CEEB, #ffffff);
+    }
+    #score, #overlay {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      color: #333;
+      font-weight: bold;
+    }
+    #score {
+      top: 10px;
+      font-size: 24px;
+    }
+    #overlay {
+      top: 40%;
+      text-align: center;
+      font-size: 32px;
+      background: rgba(255,255,255,0.9);
+      padding: 20px;
+      border-radius: 10px;
+    }
+    #startBtn, #pauseBtn {
+      margin-top: 10px;
+      font-size: 18px;
+      padding: 8px 16px;
+      border: none;
+      background: #ff6347;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Score: 0</div>
+  <div id="overlay">
+    <div>Sky Flip</div>
+    <button id="startBtn">Start Game</button>
+    <button id="pauseBtn" style="display:none;">Pause</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const overlay = document.getElementById("overlay");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let gravity = 0.6;
+    let flip = -1;
+    let velocity = 0;
+    let score = 0;
+    let isRunning = false;
+    let animationId;
+
+    const jumpSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+    const hitSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+
+    const player = {
+      x: 50,
+      y: canvas.height / 2,
+      size: 30,
+      color: "#ff6347"
+    };
+
+    const obstacles = [];
+    let obstacleTimer = 0;
+
+    function drawPlayer() {
+      ctx.fillStyle = player.color;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    function drawObstacle(ob) {
+      const gradient = ctx.createLinearGradient(ob.x, ob.y, ob.x + ob.width, ob.y + ob.height);
+      gradient.addColorStop(0, "#444");
+      gradient.addColorStop(1, "#666");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+    }
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      velocity += gravity * flip;
+      player.y += velocity;
+
+      if (player.y - player.size < 0 || player.y + player.size > canvas.height) {
+        hitSound.play();
+        cancelAnimationFrame(animationId);
+        alert("Game Over! Final Score: " + score);
+        document.location.reload();
+      }
+
+      drawPlayer();
+
+      obstacleTimer++;
+      if (obstacleTimer > 90) {
+        const height = Math.random() * (canvas.height / 3);
+        const gap = 150;
+        const topObstacle = {
+          x: canvas.width,
+          y: 0,
+          width: 40,
+          height: height,
+          scored: false
+        };
+        const bottomObstacle = {
+          x: canvas.width,
+          y: height + gap,
+          width: 40,
+          height: canvas.height - height - gap,
+          scored: false
+        };
+        obstacles.push(topObstacle, bottomObstacle);
+        obstacleTimer = 0;
+      }
+
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const ob = obstacles[i];
+        ob.x -= 4;
+        drawObstacle(ob);
+
+        if (
+          player.x + player.size > ob.x &&
+          player.x - player.size < ob.x + ob.width &&
+          player.y + player.size > ob.y &&
+          player.y - player.size < ob.y + ob.height
+        ) {
+          hitSound.play();
+          cancelAnimationFrame(animationId);
+          alert("Game Over! Final Score: " + score);
+          document.location.reload();
+        }
+
+        if (!ob.scored && ob.x + ob.width < player.x) {
+          score++;
+          ob.scored = true;
+          scoreEl.textContent = "Score: " + score;
+        }
+
+        if (ob.x + ob.width < 0) {
+          obstacles.splice(i, 1);
+        }
+      }
+
+      animationId = requestAnimationFrame(update);
+    }
+
+    function startGame() {
+      isRunning = true;
+      overlay.style.display = "none";
+      pauseBtn.style.display = "inline-block";
+      update();
+    }
+
+    function togglePause() {
+      if (isRunning) {
+        cancelAnimationFrame(animationId);
+        isRunning = false;
+        pauseBtn.textContent = "Resume";
+      } else {
+        isRunning = true;
+        pauseBtn.textContent = "Pause";
+        update();
+      }
+    }
+
+    canvas.addEventListener("touchstart", () => {
+      if (!isRunning) return;
+      flip *= -1;
+      jumpSound.play();
+    });
+
+    startBtn.addEventListener("click", startGame);
+    pauseBtn.addEventListener("click", togglePause);
+  </script>
+</body>
+</html>
