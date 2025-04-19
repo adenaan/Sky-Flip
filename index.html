@@ -134,7 +134,7 @@
       obstacleTimer++;
       if (obstacleTimer > 120) {
         const height = Math.random() * (canvas.height / 3);
-        const gap = 300;
+        const gap = 150;
         obstacles.push(
           { x: canvas.width, y: 0, width: 40, height, scored: false },
           { x: canvas.width, y: height + gap, width: 40, height: canvas.height - height - gap, scored: false }
