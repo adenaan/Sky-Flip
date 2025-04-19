@@ -69,7 +69,7 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    let gravity = 0.6;
+    let gravity = 0.4;
     let flip = -1;
     let velocity = 0;
     let score = 0;
@@ -134,7 +134,7 @@
       obstacleTimer++;
       if (obstacleTimer > 90) {
         const height = Math.random() * (canvas.height / 3);
-        const gap = 150;
+        const gap = 200;
         obstacles.push(
           { x: canvas.width, y: 0, width: 40, height, scored: false },
           { x: canvas.width, y: height + gap, width: 40, height: canvas.height - height - gap, scored: false }
@@ -144,7 +144,7 @@
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
         const ob = obstacles[i];
-        ob.x -= 4;
+        ob.x -= 2.5;
         drawObstacle(ob);
 
         if (
